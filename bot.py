@@ -63,8 +63,8 @@ async def team_form(ctx, *, team_name: str = ""):
         await ctx.send(f"Sorry, I couldn't find a team named '{team_name}'. Try typing a valid Premier League team like Arsenal, Liverpool, Chelsea, etc.")
         return
 
-    # Use the free-tier accessible competition matches endpoint
-    url = "https://api.football-data.org/v4/competitions/PL/matches?season=2026"
+    # Omit or use the correct starting year format (2025 for the current 2025/26 season cycle)
+    url = "https://api.football-data.org/v4/competitions/PL/matches?season=2025"
     headers = {"X-Auth-Token": FOOTBALL_API_KEY}
 
     response = requests.get(url, headers=headers)
