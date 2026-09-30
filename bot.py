@@ -7,7 +7,9 @@ BOT_PREFIX = "$"
 TOKEN = os.getenv("DISCORD_TOKEN")
 FOOTBALL_API_KEY = os.getenv("FOOTBALL_API_KEY")
 
-bot = commands.Bot(command_prefix=BOT_PREFIX, intents=discord.Intents.all())
+intents = discord.Intents.default()
+intents.message_content = True
+bot = commands.Bot(command_prefix=BOT_PREFIX, intents=intents)
 
 TEAM_IDS = {
     "arsenal": 57,
