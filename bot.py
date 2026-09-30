@@ -38,17 +38,23 @@ async def team_form(ctx, *, team_name: str = ""):
         await ctx.send(f"Sorry, I couldn't find a team named '{team_name}'. Try one like: Arsenal, Liverpool, Chelsea, etc.")
         return
 
-    url = f"https://api.football-data.org/v4/teams/{team_id}/matches?status=FINISHED&limit=5"
+    # Fetch all matches for the team directly from the API
+    url = f"https://api.football-data.org/v4/teams/{team_id}/matches"
     headers = {"X-Auth-Token": FOOTBALL_API_KEY}
 
     response = requests.get(url, headers=headers)
     
     if response.status_code != 200:
-        await ctx.send("⚠️ Error fetching data from Football-Data API.")
+        print(f"API Error Code: {response.status_code}, Response: {response.text}")
+        await ctx.send(f"⚠️ Error fetching data from Football-Data API (Status: {response.status_code}).")
         return
 
     data = response.json()
-    matches = data.get("matches", [])
+    all_matches = data.get("matches", [])
+
+    # Filter for finished matches to show the last 5 form results
+    finished_matches = [m for m in all_matches if m["status"] == "FINISHED"]
+    matches = finished_matches[-5:]
 
     if not matches:
         await ctx.send(f"No recent finished matches found for {team_name.title()}.")
@@ -66,4 +72,5 @@ async def team_form(ctx, *, team_name: str = ""):
 
     await ctx.send("\n".join(output))
 
-bot.run(TOKEN)
+if __name__ == "__main__":
+    bot.run(TOKEN)
