@@ -11,7 +11,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix=BOT_PREFIX, intents=intents)
 
-# Comprehensive fallback dictionary so standard team names always work instantly
+# Comprehensive dictionary covering all Premier League teams
 TEAM_IDS = {
     "arsenal": 57,
     "aston villa": 58,
@@ -46,33 +46,9 @@ TEAM_IDS = {
     "wolverhampton wanderers": 76
 }
 
-def load_premier_league_teams():
-    """Dynamically fetch and expand Premier League teams from the API"""
-    url = "https://api.football-data.org/v4/competitions/PL/teams"
-    headers = {"X-Auth-Token": FOOTBALL_API_KEY}
-    
-    try:
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            data = response.json()
-            for team in data.get("teams", []):
-                name = team["name"].lower().strip()
-                team_id = team["id"]
-                TEAM_IDS[name] = team_id
-                if "shortName" in team and team["shortName"]:
-                    TEAM_IDS[team["shortName"].lower().strip()] = team_id
-                if "tla" in team and team["tla"]:
-                    TEAM_IDS[team["tla"].lower().strip()] = team_id
-            print(f"Successfully synchronized {len(data.get('teams', []))} Premier League teams!")
-        else:
-            print(f"API team sync returned status code: {response.status_code}, using fallback dictionary.")
-    except Exception as e:
-        print(f"Error fetching teams dynamically: {e}, using fallback dictionary.")
-
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}!")
-    load_premier_league_teams()
 
 @bot.command(name="hello")
 async def hello(ctx):
@@ -87,8 +63,8 @@ async def team_form(ctx, *, team_name: str = ""):
         await ctx.send(f"Sorry, I couldn't find a team named '{team_name}'. Try typing a valid Premier League team like Arsenal, Liverpool, Chelsea, etc.")
         return
 
-    # Fetch all matches for the specific team
-    url = f"https://api.football-data.org/v4/teams/{team_id}/matches"
+    # Use the free-tier accessible competition matches endpoint
+    url = "https://api.football-data.org/v4/competitions/PL/matches?season=2026"
     headers = {"X-Auth-Token": FOOTBALL_API_KEY}
 
     response = requests.get(url, headers=headers)
@@ -101,8 +77,14 @@ async def team_form(ctx, *, team_name: str = ""):
     data = response.json()
     all_matches = data.get("matches", [])
 
-    # Filter for finished matches to show the last 5 form results
-    finished_matches = [m for m in all_matches if m["status"] == "FINISHED"]
+    # Filter matches belonging to this specific team ID
+    team_matches = [
+        m for m in all_matches 
+        if m["homeTeam"]["id"] == team_id or m["awayTeam"]["id"] == team_id
+    ]
+
+    # Grab the last 5 finished matches
+    finished_matches = [m for m in team_matches if m["status"] == "FINISHED"]
     matches = finished_matches[-5:]
 
     if not matches:
