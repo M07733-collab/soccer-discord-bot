@@ -78,7 +78,7 @@ async def team_form(ctx, *, team_name: str = ""):
 
     # No season parameter: the API defaults to the current season.
     url = f"https://api.football-data.org/v4/teams/{team_id}/matches"
-    params = {"status": "FINISHED", "competitions": "PL"}
+    params = {"status": "FINISHED"}
     headers = {"X-Auth-Token": FOOTBALL_API_KEY}
 
     try:
@@ -93,11 +93,17 @@ async def team_form(ctx, *, team_name: str = ""):
 
     if response.status_code != 200:
         print(f"API Error Code: {response.status_code}, Response: {response.text}")
-        await ctx.send(f"⚠️ Error fetching data from Football-Data API (Status: {response.status_code}).")
+        await ctx.send(
+            f"⚠️ Error fetching data from Football-Data API (Status: {response.status_code}).\n"
+            f"```{response.text[:500]}```"
+        )
         return
 
-    # Matches come back oldest to newest, so the last 5 are the most recent
-    matches = response.json().get("matches", [])[-5:]
+    # Keep only Premier League games. Matches come back oldest to newest,
+    # so the last 5 are the most recent.
+    all_matches = response.json().get("matches", [])
+    pl_matches = [m for m in all_matches if m.get("competition", {}).get("code") == "PL"]
+    matches = pl_matches[-5:]
 
     if not matches:
         await ctx.send(f"No recent finished matches found for {team_name.title()}.")
