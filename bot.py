@@ -6,7 +6,8 @@ import requests
 
 BOT_PREFIX = "$"
 TOKEN = os.getenv("DISCORD_TOKEN")
-FOOTBALL_API_KEY = os.getenv("FOOTBALL_API_KEY")
+# Strip stray spaces/quotes that sometimes sneak into environment variables
+FOOTBALL_API_KEY = os.getenv("FOOTBALL_API_KEY", "").strip().strip("\"'")
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -57,6 +58,7 @@ TEAM_IDS = {
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}!")
+    print(f"Football API key length: {len(FOOTBALL_API_KEY)} (should be 32)")
 
 
 @bot.command(name="hello")
